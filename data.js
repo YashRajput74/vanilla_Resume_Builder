@@ -430,9 +430,6 @@ const data = [
                         ]
                     },
                     {
-                        "type": "paragraph"
-                    },
-                    {
                         "paragraph": [
                             {
                                 "marks": [

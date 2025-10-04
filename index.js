@@ -26,13 +26,11 @@ function renderContent(content, schema) {
                             element.appendChild(markElement);
                         }
                     });
-                }
+                } 
                 else {
-                    const textEl = document.createElement('span');
-                    textEl.innerHTML = textNode;
-                    element.appendChild(textEl);
+                    element.innerHTML += textNode;
                 }
-                
+
                 if (para.type === 'hardBreak') {
                     const hardBreakEl = document.createElement(schema.hardBreak.tag);
                     element.appendChild(hardBreakEl);
@@ -88,6 +86,7 @@ function renderResume(data) {
         side.sections.forEach(section => {
             const sectionContainer = document.createElement('div');
             sectionContainer.classList.add('section-container');
+            sectionContainer.setAttribute('data-id', section.id);
 
             const sectionTitle = document.createElement('h2');
             sectionTitle.textContent = section.title;
@@ -357,45 +356,114 @@ function addFormattingEventListeners() {
     });
 }
 
-function saveResumeData() {
-    const data = getDataFromLocalStorage();
+function saveResume() {
+    const resumeData = convertHTMLToJSON();
 
-    const sectionTitles = document.querySelectorAll('.section-container h2');
-    const sectionContents = document.querySelectorAll('.section-container .section-content');
+    saveDataToLocalStorage(resumeData);
+}
 
-    sectionTitles.forEach((title, index) => {
-        const sectionId = title.closest('.section-container').dataset.id;
-        const section = data
-            .flatMap(side => side.sections)
-            .find(sec => sec.id === sectionId);
+function convertHTMLToJSON() {
+    const resumeData = [];
 
-        if (section) {
-            section.title = title.textContent;
-        }
-    });
+    const sides = document.querySelectorAll('.resume > div');
+    sides.forEach(side => {
+        const sideData = {
+            id: side.classList[0],
+            sections: []
+        };
 
-    sectionContents.forEach((content, index) => {
-        const sectionId = content.closest('.section-container').dataset.id;
-        const section = data
-            .flatMap(side => side.sections)
-            .find(sec => sec.id === sectionId);
+        const sections = side.querySelectorAll('.section-container');
+        sections.forEach(section => {
+            const sectionData = {
+                id: section.getAttribute('data-id'),
+                title: section.querySelector('h2').textContent,
+                content: []
+            };
 
-        if (section) {
-            const updatedContent = [];
-            content.querySelectorAll('span').forEach(span => {
-                updatedContent.push({ paragraph: [{ text: span.textContent }] });
+            const contentDiv = section.querySelector('.section-content');
+            const contentElements = contentDiv.children;
+
+            Array.from(contentElements).forEach(element => {
+                if (element.tagName === 'P') {
+                    sectionData.content.push(parseParagraph(element));
+                }
+                else if (element.tagName === 'UL') {
+                    sectionData.content.push(parseList(element, 'bulletList'));
+                }
+                else if (element.tagName === 'OL') {
+                    sectionData.content.push(parseList(element, 'orderedList'));
+                }
+                else if (element.tagName === 'BR') {
+                    sectionData.content.push(parseHardBreak());
+                }
             });
-            section.content = updatedContent;
+
+            sideData.sections.push(sectionData);
+        });
+
+        resumeData.push(sideData);
+    });
+
+    return resumeData;
+}
+
+function parseParagraph(element) {
+    const paragraphData = { paragraph: [] };
+
+    const textNodes = Array.from(element.childNodes);
+    textNodes.forEach(node => {
+        if (node.nodeType === Node.TEXT_NODE) {
+            paragraphData.paragraph.push({ text: node.textContent });
+        } 
+        else if (node.nodeType === Node.ELEMENT_NODE) {
+            const markData = { text: node.textContent };
+
+            if (node.tagName === 'B') {
+                markData.marks = [{ type: 'bold' }];
+            } 
+            else if (node.tagName === 'I') {
+                markData.marks = [{ type: 'italic' }];
+            } 
+            else if (node.tagName === 'U') {
+                markData.marks = [{ type: 'underline' }];
+            } 
+            else if (node.tagName === 'SPAN' && node.style.color) {
+                markData.marks = [{ type: 'color', value: node.style.color }];
+            } 
+            else if (node.tagName === 'SPAN' && node.style.fontSize) {
+                markData.marks = [{ type: 'fontSize', value: node.style.fontSize }];
+            }
+
+            paragraphData.paragraph.push(markData);
+
+            if (node.tagName === 'BR') {
+                paragraphData.paragraph.push({ type: 'hardBreak' });
+            }
         }
     });
 
-    saveDataToLocalStorage(data);
-    alert('Resume saved successfully!');
+    return paragraphData;
+}
+
+function parseList(element, listType) {
+    const listData = { [listType]: [] };
+
+    const listItems = element.querySelectorAll('li');
+    listItems.forEach(listItem => {
+        const listItemData = { listItem: [{ paragraph: [{ text: listItem.textContent }] }] };
+        listData[listType].push(listItemData);
+    });
+
+    return listData;
+}
+
+function parseHardBreak() {
+    return { hardBreak: true };
 }
 
 function addSaveButtonListener() {
     const saveButton = document.getElementById('save-resume-btn');
-    saveButton.addEventListener('click', saveResumeData);
+    saveButton.addEventListener('click', saveResume);
 }
 
 const editModeButton = document.getElementById('edit-mode-btn');

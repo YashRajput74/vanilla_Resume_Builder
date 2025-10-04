@@ -23,9 +23,12 @@ ul li{
 
 #resume-toolbar{
     display: flex;
-    width: 100%;
+    width: fit-content;
     padding: 10px;
     gap: 10px;
+    justify-content: center;
+    border: 1px solid black;
+    margin: 10px auto;
 }
 
 .left{
