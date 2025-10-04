@@ -17,18 +17,57 @@ function renderContent(content, schema) {
             item.paragraph.forEach(para => {
                 let textNode = para.text || '';
 
-                if (para.marks) {
+                if (para.marks && para.marks.length > 0) {
+                    let currentNode = null;
+
                     para.marks.forEach(mark => {
                         const markTag = schema.marks[mark.type];
+                        
                         if (markTag) {
-                            const markElement = document.createElement(markTag.tag);
-                            markElement.innerHTML = textNode;
-                            element.appendChild(markElement);
+                            if (mark.type === 'link') {
+                                const linkElement = document.createElement(markTag.tag);
+                                linkElement.href = mark.value;
+                                if (mark.attrs?.includes('target')) {
+                                    linkElement.target = '_blank';
+                                }
+
+                                linkElement.innerHTML = textNode;
+                                currentNode = linkElement;
+                            } 
+                            else if (mark.type === 'color' || mark.type === 'fontSize') {
+                                const spanElement = document.createElement('span');
+                                if (mark.type === 'color' && mark.value) {
+                                    spanElement.style.color = mark.value;
+                                }
+                                if (mark.type === 'fontSize' && mark.value) {
+                                    spanElement.style.fontSize = mark.value;
+                                }
+                                
+                                spanElement.innerHTML = textNode;
+
+                                if (currentNode) {
+                                    currentNode.appendChild(spanElement);
+                                } else {
+                                    currentNode = spanElement;
+                                }
+                            }
+                            else {
+                                const markElement = document.createElement(markTag.tag);
+                                markElement.innerHTML = textNode;
+                                currentNode = markElement;
+                            }
                         }
                     });
+
+                    if (!currentNode) {
+                        currentNode = document.createTextNode(textNode);
+                    }
+
+                    element.appendChild(currentNode);
                 } 
                 else {
-                    element.innerHTML += textNode;
+                    const plainText = document.createTextNode(textNode);
+                    element.appendChild(plainText);
                 }
 
                 if (para.type === 'hardBreak') {
@@ -134,7 +173,7 @@ function toggleEditMode() {
     if (editModeButton) {
         if (editModeButton.textContent.trim() === 'Edit Mode') {
             editModeButton.textContent = 'Preview Mode';
-        } 
+        }
         else {
             editModeButton.textContent = 'Edit Mode';
         }
@@ -213,18 +252,18 @@ function addFormattingEventListeners() {
 
 function applyFormatting(command, value = null) {
     const selection = window.getSelection();
-    const range = selection.getRangeAt(0); 
+    const range = selection.getRangeAt(0);
 
     if (command === 'color') {
         const span = document.createElement('span');
         span.style.color = value;
-        range.surroundContents(span); 
-    } 
+        range.surroundContents(span);
+    }
     else if (command === 'fontSize') {
         const span = document.createElement('span');
         span.style.fontSize = value;
         range.surroundContents(span);
-    } 
+    }
     else if (command === 'link') {
         const url = prompt('Enter the link URL:', 'https://');
         if (url) {
@@ -234,7 +273,7 @@ function applyFormatting(command, value = null) {
             range.deleteContents();
             range.insertNode(aTag);
         }
-    } 
+    }
     else if (command === 'bulletList') {
         const ul = document.createElement('ul');
         const li = document.createElement('li');
@@ -242,7 +281,7 @@ function applyFormatting(command, value = null) {
         ul.appendChild(li);
         range.deleteContents();
         range.insertNode(ul);
-    } 
+    }
     else if (command === 'orderedList') {
         const ol = document.createElement('ol');
         const li = document.createElement('li');
@@ -250,7 +289,7 @@ function applyFormatting(command, value = null) {
         ol.appendChild(li);
         range.deleteContents();
         range.insertNode(ol);
-    } 
+    }
     else {
         document.execCommand(command, false, null);
     }
@@ -414,26 +453,28 @@ function parseParagraph(element) {
     textNodes.forEach(node => {
         if (node.nodeType === Node.TEXT_NODE) {
             paragraphData.paragraph.push({ text: node.textContent });
-        } 
+        }
         else if (node.nodeType === Node.ELEMENT_NODE) {
             const markData = { text: node.textContent };
 
             if (node.tagName === 'B') {
                 markData.marks = [{ type: 'bold' }];
-            } 
+            }
             else if (node.tagName === 'I') {
                 markData.marks = [{ type: 'italic' }];
-            } 
+            }
             else if (node.tagName === 'U') {
                 markData.marks = [{ type: 'underline' }];
-            } 
+            }
             else if (node.tagName === 'SPAN' && node.style.color) {
                 markData.marks = [{ type: 'color', value: node.style.color }];
-            } 
+            }
             else if (node.tagName === 'SPAN' && node.style.fontSize) {
                 markData.marks = [{ type: 'fontSize', value: node.style.fontSize }];
             }
-
+            else if (node.tagName === 'A') {
+                markData.marks = [{ type: 'link', value: node.href, attrs: ['href', 'target'] }];
+            }
             paragraphData.paragraph.push(markData);
 
             if (node.tagName === 'BR') {
