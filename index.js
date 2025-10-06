@@ -128,6 +128,7 @@ function renderResume(data) {
             sectionContainer.setAttribute('data-id', section.id);
 
             const sectionTitle = document.createElement('h2');
+            sectionTitle.classList.add('section-heading');
             sectionTitle.textContent = section.title;
             sectionContainer.appendChild(sectionTitle);
 
