@@ -1,3 +1,6 @@
+// ==========================
+// RESUME DATA
+// ==========================
 const educationData = [
     {
         id: "edu1",
@@ -46,10 +49,14 @@ const experienceData = [
     }
 ];
 
+// ==========================
+// TEMPLATE CONFIGURATION
+// ==========================
 const templates = {
     template1: {
         education: {
             layout: [["degree"], ["school"], ["city"], ["achievements"]],
+            layoutOptions: { columns: 1, display: "block" },
             style: {
                 container: "display:flex;flex-direction:column;gap:4px;",
                 degree: "font-weight:700;",
@@ -60,6 +67,7 @@ const templates = {
         },
         experience: {
             layout: [["position"], ["company"], ["city"], ["achievements"]],
+            layoutOptions: { columns: 1, display: "block" },
             style: {
                 container: "display:flex;flex-direction:column;gap:4px;",
                 position: "font-weight:700;",
@@ -73,6 +81,7 @@ const templates = {
     template2: {
         education: {
             layout: [["degree"], ["school", "date"], ["city"], ["achievements"]],
+            layoutOptions: { columns: 2, display: "inline-block" },
             style: {
                 container: "display:flex;flex-direction:column;gap:4px;",
                 degree: "font-weight:700;font-size:16px;",
@@ -84,6 +93,7 @@ const templates = {
         },
         experience: {
             layout: [["position"], ["company", "date"], ["city"], ["achievements"]],
+            layoutOptions: { columns: 2, display: "inline-block" },
             style: {
                 container: "display:flex;flex-direction:column;gap:4px;",
                 position: "font-weight:700;font-size:16px;",
@@ -98,41 +108,38 @@ const templates = {
     template3: {
         education: {
             layout: [["date"], ["school"], ["achievements"]],
+            layoutOptions: { columns: 3, display: "inline-block" },
             style: {
                 container: `
-        display:flex;
-        flex-direction:column;
-        gap:6px;
-        background:#0047AB;
-        color:white;
-        padding:12px;
-        border-radius:8px;
-        margin-bottom:8px;
-      `,
+          display:flex;
+          flex-direction:column;
+          gap:6px;
+          background:#0047AB;
+          color:white;
+          padding:12px;
+          border-radius:8px;
+          margin-bottom:8px;
+        `,
                 date: "font-weight:600;font-size:14px;",
                 school: "font-weight:700;font-size:16px;",
                 achievements: "margin-left:16px;font-size:13px;"
             }
         },
         experience: {
-            layout: [
-                ["position"],
-                ["company"],
-                ["date", "city"],
-                ["achievements"]
-            ],
+            layout: [["position"], ["company"], ["date", "city"], ["achievements"]],
+            layoutOptions: { columns: 1, display: "block" },
             style: {
                 container: `
-        display:flex;
-        flex-direction:column;
-        gap:6px;
-        background:white;
-        color:black;
-        padding:12px;
-        border-radius:8px;
-        margin-bottom:8px;
-        border:1px solid #ccc;
-      `,
+          display:flex;
+          flex-direction:column;
+          gap:6px;
+          background:white;
+          color:black;
+          padding:12px;
+          border-radius:8px;
+          margin-bottom:8px;
+          border:1px solid #ccc;
+        `,
                 position: "font-weight:700;font-size:16px;",
                 company: "font-weight:500;",
                 date: "font-size:13px;color:#444;",
@@ -143,24 +150,40 @@ const templates = {
     }
 };
 
+// ==========================
 // RENDER FUNCTIONS
+// ==========================
 function renderSection(sectionName, templateConfig, data) {
     const section = templateConfig[sectionName];
     if (!section) return "";
 
+    const { layoutOptions = {} } = section;
+    const columnCount = layoutOptions.columns || 1;
+    const displayType = layoutOptions.display || "block";
+
+    const containerStyle =
+        columnCount > 1
+            ? `display:grid;grid-template-columns:repeat(${columnCount}, 1fr);gap:12px;`
+            : `display:flex;flex-direction:column;gap:12px;`;
+
     return `
     <section class="${sectionName}">
       <h2>${sectionName.toUpperCase()}</h2>
-      <div>
-        ${data.map(item => renderItem(item, section)).join("")}
+      <div style="${containerStyle}">
+        ${data.map(item => renderItem(item, section, displayType)).join("")}
       </div>
     </section>
   `;
 }
 
-function renderItem(item, section) {
+function renderItem(item, section, displayType) {
     const { layout, style } = section;
-    let html = `<div style="${style.container}">`;
+    const containerDisplay =
+        displayType === "inline-block"
+            ? "display:inline-block;vertical-align:top;width:100%;"
+            : style.container;
+
+    let html = `<div style="${containerDisplay}">`;
 
     layout.forEach(row => {
         if (row.length === 1) {
@@ -181,11 +204,14 @@ function renderItem(item, section) {
 
 function renderValue(item, key) {
     if (key === "date") return `${item.startDate} - ${item.endDate}`;
-    if (Array.isArray(item[key])) return `<ul>${item[key].map(a => `<li>${a}</li>`).join("")}</ul>`;
+    if (Array.isArray(item[key]))
+        return `<ul>${item[key].map(a => `<li>${a}</li>`).join("")}</ul>`;
     return item[key] || "";
 }
 
+// ==========================
 // BUTTON HANDLERS
+// ==========================
 document.getElementById("t1").addEventListener("click", () => {
     document.getElementById("resumeContainer").innerHTML =
         renderSection("education", templates.template1, educationData) +
