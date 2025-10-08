@@ -79,6 +79,36 @@ const skillsData = [
     }
 ];
 
+const projectsData = [
+    {
+        id: "proj1",
+        name: "Portfolio Website",
+        description: "A personal portfolio website showcasing my projects and skills.",
+        skills: [
+            { tag: "span", text: "React" },
+            { tag: "span", text: "CSS" },
+            { tag: "span", text: "JavaScript" }
+        ],
+        github: "https://github.com/yourusername/portfolio",
+        deployed: "https://yourportfolio.com",
+        date: "Jan 2025 - Mar 2025"
+    },
+    {
+        id: "proj2",
+        name: "E-commerce App",
+        description: "An online store app with cart, checkout, and payment integration.",
+        skills: [
+            { tag: "span", text: "Node.js" },
+            { tag: "span", text: "Express" },
+            { tag: "span", text: "MongoDB" }
+        ],
+        github: "https://github.com/yourusername/ecommerce-app",
+        deployed: "https://myecommerceapp.com",
+        date: "Apr 2025 - Jul 2025"
+    }
+];
+
+
 // ==========================
 // TEMPLATE CONFIGURATION
 // - NOTE: layout rows may be plain arrays OR objects with `keys` + `rowOptions`
@@ -170,7 +200,7 @@ const templates = {
                 achievements: "margin-left:12px;font-size:13px;"
             }
         },
-        skills : {
+        skills: {
             layout: [
                 ["category"],
                 { keys: ["items"], rowOptions: { columns: 1, tag: "span", display: "block" } }
@@ -229,8 +259,28 @@ const templates = {
                 city: "font-size:13px;color:#666;",
                 achievements: "margin-left:12px;font-size:13px;"
             }
+        },
+        projects: {
+            layout: [
+                ["name"],
+                ["description"],
+                { keys: ["skills"], rowOptions: { columns: 3, tag: "span" } },
+                ["github"],
+                ["deployed"],
+                ["date"]
+            ],
+            layoutOptions: { columns: 1, display: "block" },
+            style: {
+                container: "display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid #ccc;border-radius:8px;margin-bottom:8px;",
+                name: "font-weight:700;font-size:16px;",
+                description: "font-size:14px;color:#333;",
+                skills: "margin-left:12px;",
+                github: "color:#0366d6;text-decoration:underline;",
+                deployed: "color:#28a745;text-decoration:underline;",
+                date: "color:#666;font-size:13px;"
+            }
         }
-    }
+    },
 };
 
 // ==========================
@@ -388,5 +438,6 @@ document.getElementById("t3").addEventListener("click", () => {
     document.getElementById("resumeContainer").innerHTML =
         renderSection("education", templates.template3, educationData) +
         renderSection("experience", templates.template3, experienceData) +
-        renderSection("skills", templates.template3, skillsData);
+        renderSection("skills", templates.template3, skillsData) +
+        renderSection("projects", templates.template3, projectsData);
 });
