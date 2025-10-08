@@ -244,7 +244,7 @@ const templates = {
                 "education-1", "awards-1", "corsework-1", "interests-1"
             ],
             style: {
-
+                //to be added
             }
         }
     ],
